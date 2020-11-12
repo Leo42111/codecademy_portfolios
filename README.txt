@@ -1,0 +1,1 @@
+This is the place where I store Codecademy portfolios, which are generally large-scale projects.
