@@ -1,4 +1,4 @@
-Python portfolio
+Python Portfolio
 
 This project is to investigate a U.S. medical insurance cost database using Python.
 

@@ -1,4 +1,4 @@
-Data Visualization portfolio
+Data Visualization Portfolio
 
 For this project, we are analyzing data on GDP and life expectancy from the World Health Organization and the World Bank.
 
