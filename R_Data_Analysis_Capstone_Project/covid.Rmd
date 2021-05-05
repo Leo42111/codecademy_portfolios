@@ -1,0 +1,39 @@
+---
+title: "The Effects of [Insert] On [Insert]"
+output: html_notebook
+---
+### Introduction
+
+In this document, we investigated...
+
+### The Data
+
+First, we load all the libraries used in this project.
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gtrendsR)
+```
+
+```{r}
+trends <- gtrends(keyword = c("COVID-19"), time = "2020-01-01 2020-12-31")
+```
+
+```{r}
+plot(trends)
+```
+
+```{r}
+trends$interest_over_time
+
+trends$interest_by_country
+trends$interest_by_dma
+trends$interest_by_city
+
+trends$related_queries
+trends$related_topics
+```
+
+
+### Conclusion and Further Steps
