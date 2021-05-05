@@ -1,4 +1,4 @@
-Final Portfolio
+Data Scientist Final Portfolio
 
 This project is an investigation of Amazon's Top 50 bestselling books from 2009 to 2019. We will use NumPy and Pandas to load and analyze the database, and use Seaborn and Matplotlib to visualize the data. We will also use Scikit-learn to solve a machine learning classification model.
 
