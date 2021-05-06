@@ -1,10 +1,10 @@
 ---
-title: "The Effects of [Insert] On [Insert]"
+title: "COVID-19 Vaccination Investigation"
 output: html_notebook
 ---
 ### Introduction
 
-In this document, we investigated...
+In this document, we investigated the search trends of COVID-19 vaccine and daily vaccinations for different countries. This investigation focused on four countries/regions, including Hong Kong, Singapore, United States and Israel. We also investigated if there is any correlation between the search rate and the daily vaccination number.
 
 ### The Data
 
@@ -17,23 +17,42 @@ library(gtrendsR)
 ```
 
 ```{r}
-trends <- gtrends(keyword = c("COVID-19"), time = "2020-01-01 2020-12-31")
+trends <- gtrends(keyword = c("COVID-19 vaccine"), geo = c("HK", "SG", "US", "IL"), time = "today 12-m")
+trends_over_time <- trends$interest_over_time
+trends_over_time <- trends_over_time %>% mutate(hits = as.numeric(hits)) %>%replace_na(list(hits = 0))
 ```
 
 ```{r}
-plot(trends)
+# Plotting the trends
+trends_over_time %>% ggplot() + geom_line(aes(date, hits, color = geo)) +
+  scale_color_discrete(name = "Country", labels = c("Hong Kong", "Singapore", "United States", "Israel" )) + 
+  labs(title = "Google Trend Data For COVID-19 Vaccination", y = "Hits (Normalized to be between 0 and 1000", x = "Date")
 ```
 
 ```{r}
-trends$interest_over_time
-
-trends$interest_by_country
-trends$interest_by_dma
-trends$interest_by_city
-
-trends$related_queries
-trends$related_topics
+df <- read.csv('country_vaccinations.csv')
 ```
+
+```{r}
+df
+```
+```{r}
+df_hk <- df %>% filter(country == "Hong Kong")
+df_sg <- df %>% filter(country == "Singapore")
+df_us <- df %>% filter(country == "United States")
+df_il <- df %>% filter(country == "Israel")
+```
+
+```{r}
+df_hk4211
+```
+
+
+
+
+
+
+
 
 
 ### Conclusion and Further Steps
