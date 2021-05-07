@@ -8,7 +8,8 @@ In this document, we investigated the search trends of COVID-19 vaccine and dail
 
 ### The Data
 
-First, we load all the libraries used in this project.
+First, we load all the libraries used in this project. Dplyr and tidyr are used to tidy the dataset; ggplot2 is used for data visualization; and grendsR is used to get popularity of search terms on Google over time.
+
 ```{r}
 library(dplyr)
 library(tidyr)
@@ -16,45 +17,60 @@ library(ggplot2)
 library(gtrendsR)
 ```
 
+First, we used gtrendsR to obtain popularity of the search term "COVID-19 vaccine" for four countries/regions: Hong Kong, Singapore, USA and Israel. We set the search period to be the past 12 months.
+
 ```{r}
 trends <- gtrends(keyword = c("COVID-19 vaccine"), geo = c("HK", "SG", "US", "IL"), time = "today 12-m")
 trends_over_time <- trends$interest_over_time
 trends_over_time <- trends_over_time %>% mutate(hits = as.numeric(hits)) %>% replace_na(list(hits = 0))
 ```
 
+Then, we plot a line graph regarding the search trend of "COVID-19 vaccine" over time. The x-axis is the date, and the y-axis is the search rate, which is normalized to be between 0 and 100.
+
 ```{r}
 # Plotting the trends
 trends_over_time %>% ggplot() + geom_line(aes(date, hits, color = geo)) +
-  scale_color_discrete(name = "Country", labels = c("Hong Kong", "Singapore", "United States", "Israel" )) + 
+  scale_color_discrete(name = "Country", labels = c("Hong Kong", "Israel", "Singapore", "United States")) + 
   labs(title = "Google Trend Data For COVID-19 Vaccination", y = "Hits (Normalized to be between 0 and 1000", x = "Date")
 ```
+
+Based on the graph above, more people searched "COVID-19 vaccine" when 2021 starts, most likely because vaccines are more available starting from 2021. Also, COVID-19 vaccination searches are more popular in the US and Singapore, than in Hong Kong and Israel.
+
+Then, we investigated the vaccination progress in these 4 regions. We load and inspected the dataset.
 
 ```{r}
 df <- read.csv('country_vaccinations.csv')
 ```
 
 ```{r}
-df
+head(df)
 ```
+We cleaned and filtered the data, so that only vaccination data from Hong Kong, Singapore, United States and Israel remains.
+
 ```{r}
 df[is.na(df)] <- 0
 df$date <- as.Date(df$date, "%Y-%m-%d")
 df_filter <- df %>% filter(country == "Hong Kong" | country == "Singapore" | country == "United States" | country == "Israel")
-df_hk <- df %>% filter(country == "Hong Kong")
-df_sg <- df %>% filter(country == "Singapore")
-df_us <- df %>% filter(country == "United States")
-df_il <- df %>% filter(country == "Israel")
 ```
 
-```{r}
-df_hk
-#min(df_hk$date)
-#max(df_hk$date)
-df_hk %>% ggplot() + geom_line(aes(date, daily_vaccinations))
-```
+We investigated the daily vaccination of Hong Kong first. We plotted a line graph to display the data.
 
 ```{r}
-df_filter %>% ggplot() + geom_line(aes(date, daily_vaccinations_per_million, color = country))
+df_hk <- df_filter %>% filter(country == "Hong Kong")
+df_hk %>% ggplot() + 
+  geom_line(aes(date, daily_vaccinations)) + 
+  labs(title = "Hong Kong Daily COVID-19 Vaccination", y = "Daily Vaccinations", x = "Date")
+```
+
+Based on the graph, the vaccination scheme started in February with a steady rise until late March. There was a dip in daily vaccinations, most likely because BioNTech vaccine was suspended from March 24 for a while due to defective packaging. The daily vaccination number rose again from early April, followed by another drop in late April.
+
+Now we have investigated the vaccination rate in Hong, we compared the total number of people vaccinated with other countries. Due to different population sizes, we used a ratio (in percent) between population immunized and total population. Also, we have dropped rows without values on people vaccinated per hundred.
+
+```{r}
+df_filter[df_filter$people_vaccinated_per_hundred != 0, ] %>% ggplot() + 
+  geom_line(aes(date, people_vaccinated_per_hundred, color = country)) + 
+  scale_color_discrete(name = "Country", labels = c("Hong Kong", "Israel", "Singapore", "United States")) + 
+  labs(title = "COVID-19 Vaccination By Countries", y = "People Vaccinated (per million)", x = "Date")
 ```
 
 
