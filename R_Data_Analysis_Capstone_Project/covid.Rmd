@@ -4,11 +4,11 @@ output: html_notebook
 ---
 ### Introduction
 
-In this document, we investigated the search trends of COVID-19 vaccine and daily vaccinations for different countries. This investigation focused on four countries/regions, including Hong Kong, Singapore, United States and Israel. We also investigated if there is any correlation between the search rate and the daily vaccination number.
+In this project, we investigated the search trends of COVID-19 vaccine and daily vaccinations for different countries. This investigation focused on four countries/regions, including Hong Kong, Singapore, United States and Israel. We also investigated if there were any correlation between the search rate and the daily vaccination number.
 
-### The Data
+### Search Trends on COVID-19 Vaccines
 
-First, we load all the libraries used in this project. Dplyr and tidyr are used to tidy the dataset; ggplot2 is used for data visualization; and grendsR is used to get popularity of search terms on Google over time.
+First, we loaded all the libraries used in this project. Dplyr and tidyr are used to tidy the dataset; ggplot2 is used for data visualization; and grendsR is used to get popularity of search terms on Google over time.
 
 ```{r}
 library(dplyr)
@@ -17,7 +17,7 @@ library(ggplot2)
 library(gtrendsR)
 ```
 
-First, we used gtrendsR to obtain popularity of the search term "COVID-19 vaccine" for four countries/regions: Hong Kong, Singapore, USA and Israel. We set the search period to be the past 12 months.
+We used gtrendsR to obtain popularity of the search term "COVID-19 vaccine" for four countries/regions: Hong Kong, Singapore, USA and Israel. We set the search period to be the past 12 months.
 
 ```{r}
 trends <- gtrends(keyword = c("COVID-19 vaccine"), geo = c("HK", "SG", "US", "IL"), time = "today 12-m")
@@ -25,18 +25,20 @@ trends_over_time <- trends$interest_over_time
 trends_over_time <- trends_over_time %>% mutate(hits = as.numeric(hits)) %>% replace_na(list(hits = 0))
 ```
 
-Then, we plot a line graph regarding the search trend of "COVID-19 vaccine" over time. The x-axis is the date, and the y-axis is the search rate, which is normalized to be between 0 and 100.
+Then, we plotted a line graph regarding the search trend of "COVID-19 vaccine" over time. The x-axis is the date, and the y-axis is the search rate, which is normalized to be between 0 and 100.
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 # Plotting the trends
 trends_over_time %>% ggplot() + geom_line(aes(date, hits, color = geo)) +
   scale_color_discrete(name = "Country", labels = c("Hong Kong", "Israel", "Singapore", "United States")) + 
   labs(title = "Google Trend Data For COVID-19 Vaccination", y = "Hits (Normalized to be between 0 and 1000", x = "Date")
 ```
 
-Based on the graph above, more people searched "COVID-19 vaccine" when 2021 starts, most likely because vaccines are more available starting from 2021. Also, COVID-19 vaccination searches are more popular in the US and Singapore, than in Hong Kong and Israel.
+Based on the graph above, more people searched "COVID-19 vaccine" when 2021 starts, most likely because vaccines were more available starting from 2021. Also, COVID-19 vaccination searches were more popular in the US and Singapore in 2021, than in Hong Kong and Israel.
 
-Then, we investigated the vaccination progress in these 4 regions. We load and inspected the dataset.
+Then, we investigated the vaccination progress in these 4 regions. We loaded and inspected the dataset.
+
+### Vaccination Progress
 
 ```{r}
 df <- read.csv('country_vaccinations.csv')
@@ -45,7 +47,7 @@ df <- read.csv('country_vaccinations.csv')
 ```{r}
 head(df)
 ```
-We cleaned and filtered the data, so that only vaccination data from Hong Kong, Singapore, United States and Israel remains.
+We cleaned and filtered the data, so that only vaccination data from Hong Kong, Singapore, United States and Israel remained.
 
 ```{r}
 df[is.na(df)] <- 0
@@ -55,29 +57,87 @@ df_filter <- df %>% filter(country == "Hong Kong" | country == "Singapore" | cou
 
 We investigated the daily vaccination of Hong Kong first. We plotted a line graph to display the data.
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 df_hk <- df_filter %>% filter(country == "Hong Kong")
 df_hk %>% ggplot() + 
   geom_line(aes(date, daily_vaccinations)) + 
-  labs(title = "Hong Kong Daily COVID-19 Vaccination", y = "Daily Vaccinations", x = "Date")
+  labs(title = "Hong Kong COVID-19 Vaccination", y = "Daily Vaccinations", x = "Date")
 ```
 
 Based on the graph, the vaccination scheme started in February with a steady rise until late March. There was a dip in daily vaccinations, most likely because BioNTech vaccine was suspended from March 24 for a while due to defective packaging. The daily vaccination number rose again from early April, followed by another drop in late April.
 
 Now we have investigated the vaccination rate in Hong, we compared the total number of people vaccinated with other countries. Due to different population sizes, we used a ratio (in percent) between population immunized and total population. Also, we have dropped rows without values on people vaccinated per hundred.
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 df_filter[df_filter$people_vaccinated_per_hundred != 0, ] %>% ggplot() + 
   geom_line(aes(date, people_vaccinated_per_hundred, color = country)) + 
   scale_color_discrete(name = "Country", labels = c("Hong Kong", "Israel", "Singapore", "United States")) + 
-  labs(title = "COVID-19 Vaccination By Countries", y = "People Vaccinated (per million)", x = "Date")
+  labs(title = "COVID-19 Vaccination", y = "People Vaccinated (per hundred)", x = "Date")
 ```
 
+Based on the graph, Israel and the United states started their vaccination scheme early in December 2020, followed by Singapore in mid-January and Hong Kong in late-February. While Israel and the US started at the same time, Israel showed a much higher increase in vaccinated population. By April, around 60 out of 100 people in Israel had been vaccinated, comparing to 30 out of 100 in the US. Hong Kong, Singapore and United States had a steady increase in number of people vaccinated, while Israel was peaking starting from mid-March.
 
+### Search Rates vs Daily Vaccinations
 
+Finally, we investigated if there was linear correlation between search rates in Google and daily vaccination numbers. First, we dropped all unnecessary columns.
 
+```{r}
+search_df <- trends_over_time %>% select(date, hits, geo)
+vaccine_df <- df_filter %>% select(country, date, daily_vaccinations)
+```
 
+We created plots for individual countries. Starting with Hong Kong, we filtered, merged the data frames by date, and plotted a scatter plot with a smoothing line.
 
+```{r, fig.width=5, fig.height=3}
+search_df_hk <- search_df %>% filter(geo == "HK")
+vaccine_df_hk <- vaccine_df %>% filter(country == "Hong Kong")
+overall_df_hk <- search_df_hk %>% inner_join(vaccine_df_hk)
 
+overall_df_hk %>% ggplot(aes(x = hits, y = daily_vaccinations)) + 
+  geom_point() + 
+  geom_smooth() + 
+  labs(title = "Search Hits vs Daily Vaccionations (Hong Kong)", y = "Daily Vaccinations", x = "Search Hits")
+```
+We repeated the same process with Singapore, United States and Israel.
+
+```{r, fig.width=5, fig.height=3}
+search_df_sg <- search_df %>% filter(geo == "SG")
+vaccine_df_sg <- vaccine_df %>% filter(country == "Singapore")
+overall_df_sg <- search_df_sg %>% inner_join(vaccine_df_sg)
+
+overall_df_sg %>% ggplot(aes(x = hits, y = daily_vaccinations)) + 
+  geom_point() + 
+  geom_smooth() + 
+  labs(title = "Search Hits vs Daily Vaccionations (Singapore)", y = "Daily Vaccinations", x = "Search Hits")
+```
+
+```{r, fig.width=5, fig.height=3}
+search_df_us <- search_df %>% filter(geo == "US")
+vaccine_df_us <- vaccine_df %>% filter(country == "United States")
+
+overall_df_us <- search_df_us %>% inner_join(vaccine_df_us)
+
+overall_df_us %>% ggplot(aes(x = hits, y = daily_vaccinations)) + 
+  geom_point() + 
+  geom_smooth() + 
+  labs(title = "Search Hits vs Daily Vaccionations (United States)", y = "Daily Vaccinations", x = "Search Hits")
+```
+```{r, fig.width=5, fig.height=3}
+vaccine_df_il <- vaccine_df %>% filter(country == "Israel")
+search_df_il <- search_df %>% filter(geo == "IL")
+
+overall_df_il <- search_df_il %>% inner_join(vaccine_df_il)
+
+overall_df_il %>% ggplot(aes(x = hits, y = daily_vaccinations)) + 
+  geom_point() + 
+  geom_smooth() + 
+  labs(title = "Search Hits vs Daily Vaccionations (Israel)", y = "Daily Vaccinations", x = "Search Hits")
+```
+Based on the above graphs, there was no obvious linear correlation between search hits and daily vaccinations.
 
 ### Conclusion and Further Steps
+In this project, we have investigated the search trends of COVID-19 vaccines and discovered more people searched for this keyword in 2021. We have also investigated the vaccination progress for Hong Kong, Singapore, United States and Israel. At last, we have discovered there was no obvious linear relationship between people googling COVID-19 vaccine and people getting vaccinations.
+
+However, there is a lack of matched search hits and daily vaccinations with the same date. Due to few data points, it may result to inaccurate smoothing lines. In case there is more data in the future, we can further check if there are any changes to the regression lines.
+
+We can further investigate the relationship between vaccination numbers and confirmed cases if dataset for COVID-19 confirmed cases is available.
