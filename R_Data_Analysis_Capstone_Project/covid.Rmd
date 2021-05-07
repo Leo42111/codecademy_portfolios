@@ -19,7 +19,7 @@ library(gtrendsR)
 ```{r}
 trends <- gtrends(keyword = c("COVID-19 vaccine"), geo = c("HK", "SG", "US", "IL"), time = "today 12-m")
 trends_over_time <- trends$interest_over_time
-trends_over_time <- trends_over_time %>% mutate(hits = as.numeric(hits)) %>%replace_na(list(hits = 0))
+trends_over_time <- trends_over_time %>% mutate(hits = as.numeric(hits)) %>% replace_na(list(hits = 0))
 ```
 
 ```{r}
@@ -37,6 +37,9 @@ df <- read.csv('country_vaccinations.csv')
 df
 ```
 ```{r}
+df[is.na(df)] <- 0
+df$date <- as.Date(df$date, "%Y-%m-%d")
+df_filter <- df %>% filter(country == "Hong Kong" | country == "Singapore" | country == "United States" | country == "Israel")
 df_hk <- df %>% filter(country == "Hong Kong")
 df_sg <- df %>% filter(country == "Singapore")
 df_us <- df %>% filter(country == "United States")
@@ -44,9 +47,15 @@ df_il <- df %>% filter(country == "Israel")
 ```
 
 ```{r}
-df_hk4211
+df_hk
+#min(df_hk$date)
+#max(df_hk$date)
+df_hk %>% ggplot() + geom_line(aes(date, daily_vaccinations))
 ```
 
+```{r}
+df_filter %>% ggplot() + geom_line(aes(date, daily_vaccinations_per_million, color = country))
+```
 
 
 
